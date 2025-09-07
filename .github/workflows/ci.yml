@@ -1,58 +1,25 @@
-name: CI/CD Pipeline
+name: ci.yml
 
 on:
   push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  test:
+  read-yaml:
     runs-on: ubuntu-latest
-    
-    strategy:
-      matrix:
-        python-version: [3.8, 3.9, "3.10"]
-    
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install coverage pytest-cov
-    
-    - name: Run tests with coverage
-      run: |
-        pytest --cov=app --cov-report=xml --cov-report=html
-    
-    - name: Upload coverage reports
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        fail_ci_if_error: true
+      - name: checkout
+        uses: actions/checkout@v3
 
-  docker:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Build Docker image
-      run: |
-        docker build -t devops-python-api:latest .
-        
-    - name: Test Docker container
-      run: |
-        docker run -d -p 5000:5000 --name test-container devops-python-api:latest
-        sleep 10
-        curl -f http://localhost:5000/api/v1/health || exit 1
-        docker stop test-container
+      - name: read-yaml-file
+        uses: pietrobolcato/action-read-yaml@1.0.0
+        id: read_action_js
+        with:
+          config: ${{ github.workspace }}/examples/config_example.yaml
+
+      - name: use-yaml-file
+        run: |
+          echo namespace: ${{ steps.read_action_js.outputs['namespace'] }}
+          echo location: ${{ steps.read_action_js.outputs['location'] }}
+          echo environment: ${{ steps.read_action_js.outputs['environment'] }}
+          echo resource_group_name: ${{ steps.read_action_js.outputs['resource_group_name'] }}
