@@ -9,7 +9,9 @@ RUN apt-get update && apt-get install -y \
 
 # Copiar requirements e instalar dependências Python
 COPY requirements.txt .
+RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install "fastapi[all]" uvicorn
 
 # Copiar código da aplicação
 COPY . .
@@ -19,7 +21,7 @@ RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
 # Expor porta
-EXPOSE 5000
+EXPOSE 80
 
-# Comando de inicialização
-CMD ["python", "run.py"]
+# Comando de inicialização (corrigido)
+CMD [ "uvicorn", "run:app", "--host", "0.0.0.0", "--port", "80" ]
