@@ -23,7 +23,11 @@ def sample_task(app):
         task = Task(title='Teste DevOps', description='Tarefa de teste')
         db.session.add(task)
         db.session.commit()
-        return task
+        task_id = task.id  # Pegue o id antes de sair do contexto
+        yield task_id
+        # Limpeza: remove a task criada após o teste (opcional)
+        Task.query.filter_by(id=task_id).delete()
+        db.session.commit()
 
 class TestHealthCheck:
     def test_health_endpoint(self, client):
@@ -56,14 +60,14 @@ class TestTaskAPI:
         assert data['task']['title'] == task_data['title']
 
     def test_get_task_by_id(self, client, sample_task):
-        response = client.get(f'/api/v1/tasks/{sample_task.id}')
+        response = client.get(f'/api/v1/tasks/{sample_task}')
         assert response.status_code == 200
         data = json.loads(response.data)
         assert data['task']['title'] == 'Teste DevOps'
 
     def test_update_task(self, client, sample_task):
         update_data = {'completed': True, 'priority': 'low'}
-        response = client.put(f'/api/v1/tasks/{sample_task.id}',
+        response = client.put(f'/api/v1/tasks/{sample_task}',
                             data=json.dumps(update_data),
                             content_type='application/json')
         
@@ -72,11 +76,11 @@ class TestTaskAPI:
         assert data['task']['completed'] is True
 
     def test_delete_task(self, client, sample_task):
-        response = client.delete(f'/api/v1/tasks/{sample_task.id}')
+        response = client.delete(f'/api/v1/tasks/{sample_task}')
         assert response.status_code == 200
         
         # Verificar se foi deletado
-        get_response = client.get(f'/api/v1/tasks/{sample_task.id}')
+        get_response = client.get(f'/api/v1/tasks/{sample_task}')
         assert get_response.status_code == 404
 
     def test_create_task_without_title(self, client):
