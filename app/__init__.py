@@ -28,7 +28,7 @@ def create_app():
         db.create_all()
     
     return app
-python# app/config.py
+
 import os
 
 class Config:
