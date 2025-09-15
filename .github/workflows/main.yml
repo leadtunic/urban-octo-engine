@@ -45,7 +45,6 @@ jobs:
         key: ${{ secrets.SSH_KEY }}
         port: 22
         script: |
-          cd /urban-octo-engine/github/workflows/main.yml
+          cd /home/ubuntu/urban-octo-engine
           git pull origin main
-          # Comando para reiniciar seu serviço (exemplo com systemd)
           sudo systemctl restart fastapi-app
